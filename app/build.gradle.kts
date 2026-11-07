@@ -37,6 +37,19 @@ android {
 }
 
 dependencies {
+
+    implementation("androidx.navigation:navigation-compose:2.10.2")
+
+
+    // ViewModel y corrutinas
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.11.0")
+
+    // Integración entre ViewModel y Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+
+    // Observación del estado respetando el ciclo de vida
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

@@ -1,12 +1,10 @@
 package com.example.recordatoriosteclab
 
-
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -17,8 +15,17 @@ import com.example.recordatoriosteclab.ui.theme.RecordatoriosTeclabTheme
 fun PantallaDetalleRecordatorio(
     recordatorio: Recordatorio?,
     onVolver: () -> Unit,
+    onEditar: () -> Unit = {},
+    onCambiarEstado: () -> Unit = {},
+    onEliminar: () -> Unit = {},
+    operacion: DetalleOperacionUiState =
+        DetalleOperacionUiState(),
     modifier: Modifier = Modifier
 ) {
+
+    var confirmarEliminacion by remember {
+        mutableStateOf(false)
+    }
 
     Scaffold(
         modifier = modifier,
@@ -28,7 +35,10 @@ fun PantallaDetalleRecordatorio(
                     Text("Detalle del recordatorio")
                 },
                 navigationIcon = {
-                    TextButton(onClick = onVolver) {
+                    TextButton(
+                        onClick = onVolver,
+                        enabled = !operacion.ocupado
+                    ) {
                         Text("Volver")
                     }
                 }
@@ -42,29 +52,37 @@ fun PantallaDetalleRecordatorio(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
+
             verticalArrangement =
                 Arrangement.spacedBy(12.dp)
         ) {
 
-            // Si el recordatorio no existe
             if (recordatorio == null) {
 
-                Text("No se encontró el recordatorio")
+                if (operacion.ocupado ||
+                    operacion.eliminadoId != null
+                ) {
 
-                Button(onClick = onVolver) {
-                    Text("Regresar al listado")
+                    CircularProgressIndicator()
+
+                } else {
+
+                    Text("No se encontró el recordatorio")
+
+                    Button(onClick = onVolver) {
+                        Text("Regresar al listado")
+                    }
                 }
 
             } else {
 
-                // Mostramos toda la información
                 Text(
                     text = recordatorio.titulo,
                     style = MaterialTheme.typography.headlineMedium
                 )
 
                 Text(
-                    text = recordatorio.descripcion
+                    recordatorio.descripcion
                         ?: "Sin descripción"
                 )
 
@@ -84,33 +102,139 @@ fun PantallaDetalleRecordatorio(
 
                 Text("Prioridad: $prioridad")
 
-                val estado = when (recordatorio.estado) {
-                    EstadoRecordatorio.Pendiente ->
+                val completado =
+                    recordatorio.estado ==
+                        EstadoRecordatorio.Completado
+
+                Text(
+                    if (completado)
+                        "Estado: Completado"
+                    else
+                        "Estado: Pendiente"
+                )
+
+                Text(
+                    "Ubicación: ${recordatorio.ubicacion ?: "No asignada"}"
+                )
+
+                Text(
+                    "Aviso: ${recordatorio.aviso ?: "No configurado"}"
+                )
+
+                val sincronizacion = when (
+                    recordatorio.estadoSincronizacion
+                ) {
+                    EstadoSincronizacion.PENDIENTE ->
                         "Pendiente"
 
-                    EstadoRecordatorio.Completado ->
-                        "Completado"
+                    EstadoSincronizacion.SINCRONIZADO ->
+                        "Sincronizado"
+
+                    EstadoSincronizacion.ERROR ->
+                        "Error de sincronización"
                 }
 
-                Text("Estado: $estado")
+                Text("Sincronización: $sincronizacion")
 
-                Text(
-                    "Ubicación: ${
-                        recordatorio.ubicacion ?: "No asignada"
-                    }"
-                )
+                HorizontalDivider()
 
-                Text(
-                    "Aviso: ${
-                        recordatorio.aviso ?: "No configurado"
-                    }"
-                )
+                // EDITAR
+                Button(
+                    onClick = onEditar,
+                    enabled = !operacion.ocupado,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Editar recordatorio")
+                }
+
+                // COMPLETAR O VOLVER A PENDIENTE
+                OutlinedButton(
+                    onClick = onCambiarEstado,
+                    enabled = !operacion.ocupado,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        if (completado)
+                            "Marcar como pendiente"
+                        else
+                            "Marcar como completado"
+                    )
+                }
+
+                // ELIMINAR
+                OutlinedButton(
+                    onClick = {
+                        confirmarEliminacion = true
+                    },
+                    enabled = !operacion.ocupado,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor =
+                            MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Eliminar recordatorio")
+                }
+
+                if (operacion.ocupado) {
+                    CircularProgressIndicator()
+                }
+
+                operacion.error?.let { mensaje ->
+                    Text(
+                        text = mensaje,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             }
         }
     }
+
+    // CONFIRMAR ELIMINACIÓN
+    if (confirmarEliminacion) {
+
+        AlertDialog(
+            onDismissRequest = {
+                confirmarEliminacion = false
+            },
+
+            title = {
+                Text("Eliminar recordatorio")
+            },
+
+            text = {
+                Text(
+                    "¿Estás seguro de que querés eliminar esta tarea?"
+                )
+            },
+
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmarEliminacion = false
+                        onEliminar()
+                    }
+                ) {
+                    Text(
+                        text = "Eliminar",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        confirmarEliminacion = false
+                    }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
 
-// Vista previa con un recordatorio simulado
 @Preview(showBackground = true)
 @Composable
 fun VistaPreviaDetalle() {

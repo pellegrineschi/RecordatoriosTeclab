@@ -13,3 +13,18 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Archivos locales y temporales
+.idea/inspectionProfiles/
+**/build/
+.gradle/
+local.properties
+/servidor/*.db
+/servidor/*.db-*
+/servidor/__pycache__/
+
+# Credenciales y claves privadas
+*.jks
+*.keystore
+key.properties
+.env

@@ -9,39 +9,89 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.recordatoriosteclab.ui.theme.RecordatoriosTeclabTheme
 
+// ==========================================
 // ACTIVIDAD PRINCIPAL
+// ==========================================
+
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
+
+        val repositorioPreferencias =
+            PreferenciasRepository(applicationContext)
 
         setContent {
 
-            // Creamos el ViewModel con el repositorio
             val vm: RecordatoriosViewModel = viewModel {
-                RecordatoriosViewModel(
-                    RecordatoriosRepositoryEnMemoria()
+
+                val baseDeDatos =
+                    RecordatoriosDatabase.obtenerBaseDeDatos(
+                        applicationContext
+                    )
+
+                val api = RetrofitClient.crear(
+                    applicationContext
                 )
+
+                val repositorio =
+                    RecordatoriosRepositoryRoom(
+                        baseDeDatos,
+                        api
+                    )
+
+                RecordatoriosViewModel(repositorio)
             }
 
-            RecordatoriosTeclabTheme {
+            // ViewModel de preferencias
+            val preferenciasVm: PreferenciasViewModel =
+                viewModel {
 
-                // Conectamos las pantallas mediante Navigation Compose
-                NavegacionRecordatorios(vm)
+                    PreferenciasViewModel(
+                        repositorioPreferencias
+                    )
+                }
 
+            // Observamos las preferencias
+            val preferencias by preferenciasVm
+                .preferencias
+                .collectAsStateWithLifecycle()
+
+            // Aplicamos el tema seleccionado
+            RecordatoriosTeclabTheme(
+                darkTheme = preferencias.temaOscuro
+            ) {
+
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+
+                    NavegacionRecordatorios(
+                        vm = vm,
+                        preferenciasVm = preferenciasVm
+                    )
+                }
             }
         }
     }
 }
 
+
+// ==========================================
 // PANTALLA PRINCIPAL DE RECORDATORIOS
+// ==========================================
+
 @Composable
 fun PantallaRecordatorios(
     estado: ListadoUiState,
@@ -52,8 +102,8 @@ fun PantallaRecordatorios(
 
     Scaffold(
 
-        // Botón flotante para crear recordatorios
         floatingActionButton = {
+
             FloatingActionButton(
                 onClick = onCrearRecordatorio
             ) {
@@ -63,7 +113,6 @@ fun PantallaRecordatorios(
 
     ) { innerPadding ->
 
-        // Mostramos la pantalla según su estado
         when (estado) {
 
             // ESTADO: CARGANDO
@@ -106,7 +155,6 @@ fun PantallaRecordatorios(
 
                 val lista = estado.recordatorios
 
-                // Calculamos los contadores
                 val pendientes = lista.count {
                     it.estado == EstadoRecordatorio.Pendiente
                 }
@@ -121,6 +169,7 @@ fun PantallaRecordatorios(
                     .size
 
                 LazyColumn(
+
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding),
@@ -129,6 +178,7 @@ fun PantallaRecordatorios(
 
                     verticalArrangement =
                         Arrangement.spacedBy(12.dp)
+
                 ) {
 
                     // Encabezado y contadores
@@ -141,7 +191,8 @@ fun PantallaRecordatorios(
 
                             Text(
                                 text = "Mis recordatorios",
-                                style = MaterialTheme.typography.headlineMedium
+                                style = MaterialTheme
+                                    .typography.headlineMedium
                             )
 
                             Text("Total: ${lista.size} tareas")
@@ -154,6 +205,17 @@ fun PantallaRecordatorios(
                         }
                     }
 
+                    // Si el filtro oculta todos los registros
+                    if (lista.isEmpty()) {
+
+                        item {
+
+                            Text(
+                                text = "No hay recordatorios con las preferencias actuales."
+                            )
+                        }
+                    }
+
                     // Mostramos cada recordatorio
                     items(
                         items = lista,
@@ -163,8 +225,8 @@ fun PantallaRecordatorios(
                         TarjetaRecordatorio(
                             recordatorio = recordatorio,
 
-                            // Al tocar, abrimos el detalle
                             onClick = {
+
                                 onRecordatorioClick(
                                     recordatorio.id
                                 )
@@ -177,7 +239,11 @@ fun PantallaRecordatorios(
     }
 }
 
+
+// ==========================================
 // COMPONENTE REUTILIZABLE PARA ESTADOS
+// ==========================================
+
 @Composable
 fun MensajeEstado(
     titulo: String,
@@ -189,16 +255,18 @@ fun MensajeEstado(
 ) {
 
     Column(
+
         modifier = modifier
             .fillMaxSize()
             .padding(24.dp),
 
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment =
+            Alignment.CenterHorizontally,
 
-        verticalArrangement = Arrangement.Center
+        verticalArrangement =
+            Arrangement.Center
     ) {
 
-        // Indicador de carga
         if (cargando) {
 
             CircularProgressIndicator()
@@ -219,7 +287,6 @@ fun MensajeEstado(
 
         Text(text = descripcion)
 
-        // Botón opcional para reintentar o crear
         if (onAccion != null) {
 
             Spacer(
@@ -235,7 +302,11 @@ fun MensajeEstado(
     }
 }
 
-// TARJETA REUTILIZABLE DE RECORDATORIO
+
+// ==========================================
+// TARJETA REUTILIZABLE
+// ==========================================
+
 @Composable
 fun TarjetaRecordatorio(
     recordatorio: Recordatorio,
@@ -243,7 +314,6 @@ fun TarjetaRecordatorio(
     onClick: () -> Unit = {}
 ) {
 
-    // Convertimos la prioridad en texto
     val prioridad = when (recordatorio.prioridad) {
 
         Prioridad.Alta -> "Alta"
@@ -253,7 +323,6 @@ fun TarjetaRecordatorio(
         Prioridad.Baja -> "Baja"
     }
 
-    // Convertimos el estado en texto
     val estado = when (recordatorio.estado) {
 
         EstadoRecordatorio.Pendiente -> "Pendiente"
@@ -261,7 +330,6 @@ fun TarjetaRecordatorio(
         EstadoRecordatorio.Completado -> "Completado"
     }
 
-    // Tarjeta que permite recibir clics
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth()
@@ -294,7 +362,11 @@ fun TarjetaRecordatorio(
     }
 }
 
-// VISTA PREVIA PARA ANDROID STUDIO
+
+// ==========================================
+// VISTA PREVIA
+// ==========================================
+
 @Preview(showBackground = true)
 @Composable
 fun PantallaPreview() {
@@ -309,7 +381,6 @@ fun PantallaPreview() {
 
             onReintentar = {},
 
-            // Parámetros que faltaban
             onCrearRecordatorio = {},
 
             onRecordatorioClick = {}

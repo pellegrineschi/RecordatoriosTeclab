@@ -7,6 +7,13 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+// Sin configuración real se permite compilar, pero el acceso queda bloqueado.
+if (file("google-services.json").isFile) {
+    apply(plugin = "com.google.gms.google-services")
+} else {
+    logger.warn("Firebase pendiente: colocar la configuración real en app/google-services.json")
+}
+
 android {
     namespace = "com.example.recordatoriosteclab"
 
@@ -49,6 +56,10 @@ android {
 }
 
 dependencies {
+    // Compatible con Kotlin 2.2 del proyecto (Auth 25 requiere metadatos 2.4).
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    implementation("com.google.firebase:firebase-auth")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 
     // ======================================
 // ACTIVIDAD 3 - RETROFIT Y OKHTTP

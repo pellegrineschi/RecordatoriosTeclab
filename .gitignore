@@ -28,3 +28,10 @@ local.properties
 *.keystore
 key.properties
 .env
+
+# Configuración Firebase local
+**/google-services.json
+**/*firebase-adminsdk*.json
+
+# Caché local del compilador Kotlin
+.kotlin/

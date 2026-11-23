@@ -52,7 +52,7 @@ data class PreferenciasUsuario(
 // REPOSITORIO DE PREFERENCIAS
 // ==========================================
 
-class PreferenciasRepository(context: Context) {
+class PreferenciasRepository(context: Context, uid: String) {
 
     private val dataStore =
         context.applicationContext.dataStore
@@ -62,22 +62,26 @@ class PreferenciasRepository(context: Context) {
     // CLAVES DE ALMACENAMIENTO
     // --------------------------------------
 
-    private object Claves {
+    private val cuenta = claveCuenta(uid)
+
+    private inner class ClavesCuenta {
 
         val TEMA_OSCURO =
-            booleanPreferencesKey("tema_oscuro")
+            booleanPreferencesKey("${cuenta}_tema_oscuro")
 
         val MOSTRAR_COMPLETADOS =
-            booleanPreferencesKey("mostrar_completados")
+            booleanPreferencesKey("${cuenta}_mostrar_completados")
 
         val ORDEN_LISTADO =
-            stringPreferencesKey("orden_listado")
+            stringPreferencesKey("${cuenta}_orden_listado")
     }
 
 
     // ======================================
     // LEER LAS PREFERENCIAS
     // ======================================
+
+    private val Claves = ClavesCuenta()
 
     val preferencias: Flow<PreferenciasUsuario> =
         dataStore.data

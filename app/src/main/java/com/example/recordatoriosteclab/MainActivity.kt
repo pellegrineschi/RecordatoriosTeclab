@@ -9,13 +9,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.recordatoriosteclab.ui.theme.RecordatoriosTeclabTheme
 
 // ==========================================
@@ -28,62 +25,7 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        val repositorioPreferencias =
-            PreferenciasRepository(applicationContext)
-
-        setContent {
-
-            val vm: RecordatoriosViewModel = viewModel {
-
-                val baseDeDatos =
-                    RecordatoriosDatabase.obtenerBaseDeDatos(
-                        applicationContext
-                    )
-
-                val api = RetrofitClient.crear(
-                    applicationContext
-                )
-
-                val repositorio =
-                    RecordatoriosRepositoryRoom(
-                        baseDeDatos,
-                        api
-                    )
-
-                RecordatoriosViewModel(repositorio)
-            }
-
-            // ViewModel de preferencias
-            val preferenciasVm: PreferenciasViewModel =
-                viewModel {
-
-                    PreferenciasViewModel(
-                        repositorioPreferencias
-                    )
-                }
-
-            // Observamos las preferencias
-            val preferencias by preferenciasVm
-                .preferencias
-                .collectAsStateWithLifecycle()
-
-            // Aplicamos el tema seleccionado
-            RecordatoriosTeclabTheme(
-                darkTheme = preferencias.temaOscuro
-            ) {
-
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-
-                    NavegacionRecordatorios(
-                        vm = vm,
-                        preferenciasVm = preferenciasVm
-                    )
-                }
-            }
-        }
+        setContent { AplicacionAutenticada(applicationContext) }
     }
 }
 

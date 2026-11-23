@@ -11,13 +11,13 @@ import kotlinx.coroutines.flow.map
 
 class RecordatoriosRepositoryRoom(
     private val baseDeDatos: RecordatoriosDatabase,
-    api: RecordatoriosApi
+    api: RecordatoriosApi? = null
 ) {
 
     private val dao = baseDeDatos.recordatorioDao()
 
     private val sincronizador =
-        SincronizadorRecordatorios(baseDeDatos, api)
+        api?.let { SincronizadorRecordatorios(baseDeDatos, it) }
 
 
     // ======================================
@@ -26,7 +26,9 @@ class RecordatoriosRepositoryRoom(
 
     suspend fun sincronizar(): ResultadoSincronizacion {
 
-        return sincronizador.sincronizar()
+        return sincronizador?.sincronizar() ?: ResultadoSincronizacion.Error(
+            "Sincronización HTTP pendiente: el servidor de Actividad 3 no aísla cuentas. Los cambios se guardan en este dispositivo."
+        )
     }
 
 

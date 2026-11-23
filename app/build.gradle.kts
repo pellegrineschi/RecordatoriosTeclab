@@ -30,6 +30,9 @@ android {
 
         testInstrumentationRunner =
             "androidx.test.runner.AndroidJUnitRunner"
+        // Las pruebas reales crean cuentas: solo se ejecutan aparte y con autorización.
+        testInstrumentationRunnerArguments["notClass"] =
+            "com.example.recordatoriosteclab.FirebaseRealTest"
     }
 
     buildTypes {

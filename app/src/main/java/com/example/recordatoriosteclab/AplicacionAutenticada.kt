@@ -61,7 +61,11 @@ private fun SesionAutenticada(
     CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
         val vm: RecordatoriosViewModel = viewModel {
             RecordatoriosViewModel(RecordatoriosRepositoryRoom(
-                RecordatoriosDatabase.obtenerBaseDeDatos(context, usuario.uid)
+                RecordatoriosDatabase.obtenerBaseDeDatos(context, usuario.uid),
+                remoto = if (BuildConfig.FIRESTORE_SYNC_ENABLED) RemotoFirestore(
+                    usuario.uid, FirebaseAuth.getInstance(),
+                    com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                ) else null
             ))
         }
         val preferenciasVm: PreferenciasViewModel = viewModel {

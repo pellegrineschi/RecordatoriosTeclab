@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit
  * No desinstalar entre fases: el archivo privado temporal permite limpiar las cuentas.
  * Nunca usar credenciales personales. Ver ACTIVIDAD_4_FIREBASE.md.
  */
+@PruebaFirebaseReal
 class FirebaseRealTest {
     private val compose = createAndroidComposeRule<MainActivity>()
     private val autorizacion = TestRule { base, _ ->

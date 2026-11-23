@@ -35,3 +35,9 @@ key.properties
 
 # Caché local del compilador Kotlin
 .kotlin/
+
+# Registros y dependencias de Firebase Emulator Suite
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+tests/firestore/node_modules/

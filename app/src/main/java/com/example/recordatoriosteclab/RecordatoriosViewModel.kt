@@ -133,6 +133,14 @@ class RecordatoriosViewModel(
     init {
 
         cargarRecordatorios()
+        if (repositorio.sincronizacionAutomatica) viewModelScope.launch {
+            // Reintentos mientras existe la sesión. Al salir, el scope se cancela.
+            // Tras muerte del proceso, Room conserva pendientes y se retoman al abrir.
+            while (true) {
+                sincronizarRecordatorios()
+                kotlinx.coroutines.delay(30_000)
+            }
+        }
     }
 
 

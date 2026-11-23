@@ -11,8 +11,12 @@ import kotlinx.coroutines.flow.map
 
 class RecordatoriosRepositoryRoom(
     private val baseDeDatos: RecordatoriosDatabase,
-    api: RecordatoriosApi? = null
+    api: RecordatoriosApi? = null,
+    remoto: RemotoRecordatorios? = null
 ) {
+
+    val sincronizacionAutomatica = remoto != null
+    private val firestore = remoto?.let { SincronizadorFirestore(baseDeDatos, it) }
 
     private val dao = baseDeDatos.recordatorioDao()
 
@@ -26,8 +30,8 @@ class RecordatoriosRepositoryRoom(
 
     suspend fun sincronizar(): ResultadoSincronizacion {
 
-        return sincronizador?.sincronizar() ?: ResultadoSincronizacion.Error(
-            "Sincronización HTTP pendiente: el servidor de Actividad 3 no aísla cuentas. Los cambios se guardan en este dispositivo."
+        return firestore?.sincronizar() ?: sincronizador?.sincronizar() ?: ResultadoSincronizacion.Error(
+            "Firestore pendiente de configuración y habilitación. Los cambios se guardan en este dispositivo."
         )
     }
 

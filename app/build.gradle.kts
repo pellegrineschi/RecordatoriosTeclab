@@ -25,14 +25,16 @@ android {
         applicationId = "com.example.recordatoriosteclab"
         minSdk = 29
         targetSdk = 37
+        buildConfigField("boolean", "FIRESTORE_SYNC_ENABLED",
+            providers.gradleProperty("firestoreSyncEnabled").orElse("false").get())
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner =
             "androidx.test.runner.AndroidJUnitRunner"
         // Las pruebas reales crean cuentas: solo se ejecutan aparte y con autorización.
-        testInstrumentationRunnerArguments["notClass"] =
-            "com.example.recordatoriosteclab.FirebaseRealTest"
+        testInstrumentationRunnerArguments["notAnnotation"] =
+            "com.example.recordatoriosteclab.PruebaFirebaseReal"
     }
 
     buildTypes {
@@ -55,6 +57,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -62,6 +65,7 @@ dependencies {
     // Compatible con Kotlin 2.2 del proyecto (Auth 25 requiere metadatos 2.4).
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
 
     // ======================================

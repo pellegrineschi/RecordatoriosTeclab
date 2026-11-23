@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function propietario(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function valido(id) {
+      let d = request.resource.data;
+      return d.keys().hasAll(['claveSincronizacion', 'titulo', 'descripcion', 'categoria',
+        'prioridad', 'estado', 'fechaCreacion', 'fechaModificacion', 'ubicacion',
+        'aviso', 'versionLocal', 'eliminado'])
+        && d.keys().hasOnly(['claveSincronizacion', 'titulo', 'descripcion', 'categoria',
+        'prioridad', 'estado', 'fechaCreacion', 'fechaModificacion', 'ubicacion',
+        'aviso', 'versionLocal', 'eliminado'])
+        && id.matches('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')
+        && d.claveSincronizacion == id
+        && d.titulo is string && d.titulo.size() >= 4
+        && (d.descripcion == null || (d.descripcion is string && d.descripcion.size() <= 200))
+        && d.categoria in ['Estudio', 'Trabajo', 'Compras']
+        && d.prioridad in ['ALTA', 'MEDIA', 'BAJA']
+        && d.estado in ['PENDIENTE', 'COMPLETADO']
+        && d.fechaCreacion is int && d.fechaCreacion > 0
+        && d.fechaModificacion is int && d.fechaModificacion > 0
+        && d.versionLocal is int && d.versionLocal > 0
+        && d.eliminado is bool
+        && (d.ubicacion == null || d.ubicacion is string)
+        && (d.aviso == null || d.aviso is string);
+    }
+    match /users/{uid}/reminders/{reminderId} {
+      allow read: if propietario(uid);
+      allow create: if propietario(uid) && valido(reminderId);
+      allow update: if propietario(uid) && valido(reminderId)
+        && request.resource.data.fechaCreacion == resource.data.fechaCreacion
+        && (request.resource.data.versionLocal > resource.data.versionLocal
+          || request.resource.data == resource.data);
+      // Se conservan tombstones para propagar eliminaciones a otros dispositivos.
+      allow delete: if false;
+    }
+    // Ninguna otra ruta tiene permiso. No agregar reglas públicas generales.
+  }
+}

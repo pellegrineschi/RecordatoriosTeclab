@@ -357,7 +357,7 @@ class SincronizadorRecordatorios(
 // CONVERTIR DTO REMOTO EN ENTITY
 // ==========================================
 
-private fun RecordatorioDto.aEntidadRemota(
+internal fun RecordatorioDto.aEntidadRemota(
 
     idLocal: Long = 0L
 
